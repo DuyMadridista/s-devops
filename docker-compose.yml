@@ -1,0 +1,36 @@
+version: '3.8'
+services:
+  app:
+    container_name: my_nest_app
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=development
+      - PORT=3000
+      - DATABASE_URL=mongodb+srv://vanduyluu432003:duy432003@clusterduy.jbftfuu.mongodb.net/sgroup
+    networks:
+      - internal_network
+networks:
+  internal_network:
+    driver: bridge
+#   db:
+#     container_name: sgroup_mongo
+#     image: mongo:latest
+#     ports:
+#       - "27017:27017"
+#     volumes:
+#       - mongodb_data:/data/db
+#     networks:
+#       - internal_network
+
+# networks:
+#   internal_network:
+#     driver: bridge
+#     internal: true
+
+# volumes:
+#   mongodb_data:
+#     driver: local
