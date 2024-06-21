@@ -10,7 +10,7 @@ services:
     environment:
       - NODE_ENV=development
       - PORT=3000
-      - DATABASE_URL=mongodb+srv://vanduyluu432003:duy432003@clusterduy.jbftfuu.mongodb.net/sgroup
+      - DATABASE_URL=mongodb+srv://nguyencongtrinhqb:sgroup123@cluster0.qom7v1f.mongodb.net/sgroup
     networks:
       - internal_network
 networks:
