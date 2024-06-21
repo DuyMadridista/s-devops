@@ -61,7 +61,7 @@ jobs:
         with:
           host: ${{ secrets.SSH_HOST }}
           username: ubuntu
-          key: ~/.ssh/sgrdevops.pem
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
           script: |
             aws ecr get-login-password --region ap-southeast-2 | docker login --username AWS --password-stdin ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.ap-southeast-2.amazonaws.com
             docker pull ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.ap-southeast-2.amazonaws.com/sgroup-devops:latest
