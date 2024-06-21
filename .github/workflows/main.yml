@@ -50,26 +50,15 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v2
 
-      - name: Create temporary directory
-        run: mkdir -p ~/.ssh
+      - name: Setup SSH
+        run: echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/sgrdevops.pem && chmod 600 ~/.ssh/sgrdevops.pem
 
-      - name: Create SSH key file
-        run: echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/key.pem
-
-      - name: Set permissions for SSH key
-        run: chmod 600 ~/.ssh/key.pem
-
-      - name: Add VM to known hosts
-        run: ssh-keyscan -H ${{ secrets.SSH_HOST }} >> ~/.ssh/known_hosts
-      - name: Debug SSH key
-        run: cat ~/.ssh/key.pem
-        
-      - name: SSH to VM and deploy
+      - name: SSH to EC2 and deploy
         uses: appleboy/ssh-action@v0.1.6
         with:
           host: ${{ secrets.SSH_HOST }}
-          username: ${{ secrets.SSH_USERNAME }}
-          key: ~/.ssh/key.pem
+          username: ubuntu
+          key: ~/.ssh/sgrdevops.pem
           script: |
             aws ecr get-login-password --region ap-southeast-2 | docker login --username AWS --password-stdin ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.ap-southeast-2.amazonaws.com
             docker pull ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.ap-southeast-2.amazonaws.com/sgroup-devops:latest
