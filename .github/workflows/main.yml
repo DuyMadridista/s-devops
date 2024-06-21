@@ -50,7 +50,10 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v2
 
-      - name: Setup SSH
+      - name: Create temporary directory
+        run: mkdir -p ~/.ssh
+
+       - name: Setup SSH
         run: echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/sgrdevops.pem && chmod 600 ~/.ssh/sgrdevops.pem
 
       - name: SSH to EC2 and deploy
