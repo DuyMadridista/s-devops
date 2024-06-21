@@ -7,8 +7,8 @@ async function bootstrap() {
   const app = await NestFactory.create(AppModule, { cors: true });
   app.setGlobalPrefix('api');
 
-  app.getHttpAdapter().get('/api/simple-endpoint', (req: Request, res: Response) => {
-    return res.send('This is a simple endpoint!');
+  app.getHttpAdapter().get('/api/hala', (req: Request, res: Response) => {
+    return res.send('Hala Madrid!');
   });
   await app.listen(PORT, () => console.log(`App is running on port: ${PORT}`));
 }
