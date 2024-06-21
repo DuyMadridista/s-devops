@@ -10,6 +10,7 @@ import { getMongoConfig } from './config/mongo.config';
       envFilePath: '.env',
     }),
     MongooseModule.forRootAsync(getMongoConfig()),
+    //shkjfkjas
   ],
 })
 export class AppModule {}
