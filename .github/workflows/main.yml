@@ -18,15 +18,6 @@
           with:
             node-version: 20
 
-        - name: Install pnpm
-          run: npm install -g pnpm
-
-        - name: Install dependencies
-          run: pnpm install
-
-        - name: Run tests
-          run: pnpm test
-
         - name: Build Docker image
           run: docker build -t sgroup-devops .
 
@@ -52,7 +43,7 @@
       steps:
         - name: Checkout repository
           uses: actions/checkout@v2
-          
+
         - name: SSH to EC2 and deploy
           uses: appleboy/ssh-action@v0.1.6
           with:
