@@ -51,7 +51,7 @@
             username: ubuntu
             key: ${{ secrets.SSH_PRIVATE_KEY }}
             script: |
-                aws ecr get-login-password --region ap-southeast-2 | docker login --username AWS --password-stdin ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.ap-southeast-2.amazonaws.com
+                sudo aws ecr get-login-password --region ap-southeast-2 | docker login --username AWS --password-stdin ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.ap-southeast-2.amazonaws.com
                 sudo docker pull ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.ap-southeast-2.amazonaws.com/sgroup-devops:latest
                 sudo docker stop sgroup-devops-container || true
                 sudo docker rm sgroup-devops-container || true
