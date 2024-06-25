@@ -1,74 +1,74 @@
-  name: CI/CD Pipeline
+name: CI/CD Pipeline
 
-  on:
-    push:
-      branches:
-        - master
+on:
+  push:
+    branches:
+      - master
 
-  jobs:
-    build:
-      runs-on: ubuntu-latest
+jobs:
+  build:
+    runs-on: ubuntu-latest
 
-      steps:
-        - name: Checkout repository
-          uses: actions/checkout@v2
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v2
 
-        - name: Set up Node.js
-          uses: actions/setup-node@v2
-          with:
-            node-version: 20
+      - name: Set up Node.js
+        uses: actions/setup-node@v2
+        with:
+          node-version: 20
 
-        - name: Build Docker image
-          run: docker build -t sgroup-devops .
+      - name: Install pnpm
+        run: npm install -g pnpm
 
-        - name: Configure AWS credentials
-          uses: aws-actions/configure-aws-credentials@v1
-          with:
-            aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-            aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-            aws-region: ap-southeast-2
+      - name: Install dependencies
+        run: pnpm install
 
-        - name: Login to Amazon ECR
-          id: login-ecr
-          uses: aws-actions/amazon-ecr-login@v1
+      - name: Build Docker image
+        run: docker build -t sgroup-devops .
 
-        - name: Push to ECR
-          run: |
-            docker tag sgroup-devops:latest 339712966976.dkr.ecr.ap-southeast-2.amazonaws.com/sgroup-devops:latest
-            docker push 339712966976.dkr.ecr.ap-southeast-2.amazonaws.com/sgroup-devops:latest
-    deploy:
-      needs: build
-      runs-on: ubuntu-latest
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ap-southeast-2
 
-      steps:
-        - name: Checkout repository
-          uses: actions/checkout@v2
+      - name: Login to Amazon ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v1
 
-        - name: SSH to EC2 and deploy
-          uses: appleboy/ssh-action@v0.1.6
-          with:
-            host: ${{ secrets.SSH_HOST }}
-            username: ubuntu
-            key: ${{ secrets.SSH_PRIVATE_KEY }}
-            script: |
-                sudo apt-get update
-                sudo apt-get install -y awscli docker.io
-          
-                sudo systemctl start docker
-                sudo systemctl enable docker
-          
-                aws configure set aws_access_key_id ${{ secrets.AWS_ACCESS_KEY_ID }}
-                aws configure set aws_secret_access_key ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-                aws configure set default.region ap-southeast-2
-                
-                sudo aws ecr get-login-password --region ap-southeast-2 | docker login --username AWS --password-stdin ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.ap-southeast-2.amazonaws.com
-                echo "Exit code after docker login: $?"
-          
-                sudo docker pull ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.ap-southeast-2.amazonaws.com/sgroup-devops:latest
-                echo "Exit code after docker pull: $?"
-          
-                sudo docker stop sgroup-devops-container || true
-                sudo docker rm sgroup-devops-container || true
-          
-                sudo docker run -d --name sgroup-devops-container -p 3000:3000 -e DB_URI='${{ secrets.DB_URI }}' ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.ap-southeast-2.amazonaws.com/sgroup-devops:latest
-                echo "Exit code after docker run: $?"
+      - name: Push to ECR
+        run: |
+          docker tag sgroup-devops:latest 339712966976.dkr.ecr.ap-southeast-2.amazonaws.com/sgroup-devops:latest
+          docker push 339712966976.dkr.ecr.ap-southeast-2.amazonaws.com/sgroup-devops:latest
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v2
+
+      - name: Create temporary directory
+        run: mkdir -p ~/.ssh
+
+      - name: Setup SSH
+        run: echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/sgrdevops.pem && chmod 600 ~/.ssh/sgrdevops.pem
+
+      - name: SSH to EC2 and deploy
+        uses: appleboy/ssh-action@v0.1.6
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ubuntu
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          script: |
+            aws ecr get-login-password --region ap-southeast-2 | docker login --username AWS --password-stdin ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.ap-southeast-2.amazonaws.com
+            docker pull ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.ap-southeast-2.amazonaws.com/sgroup-devops:latest
+            docker stop sgroup-devops-container || true
+            docker rm sgroup-devops-container || true
+            docker run -d --name sgroup-devops-container -p 3000:3000 -e DB_URI=${{ secrets.DB_URI }} ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.ap-southeast-2.amazonaws.com/sgroup-devops:latest
+
+      - name: Clean up SSH key file
+        if: always()
+        run: rm -f ~/.ssh/key.pem
