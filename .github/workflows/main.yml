@@ -53,16 +53,22 @@
             script: |
                 sudo apt-get update
                 sudo apt-get install -y awscli docker.io
-
+          
                 sudo systemctl start docker
                 sudo systemctl enable docker
-
+          
                 aws configure set aws_access_key_id ${{ secrets.AWS_ACCESS_KEY_ID }}
                 aws configure set aws_secret_access_key ${{ secrets.AWS_SECRET_ACCESS_KEY }}
                 aws configure set default.region ap-southeast-2
                 
                 sudo aws ecr get-login-password --region ap-southeast-2 | docker login --username AWS --password-stdin ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.ap-southeast-2.amazonaws.com
+                echo "Exit code after docker login: $?"
+          
                 sudo docker pull ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.ap-southeast-2.amazonaws.com/sgroup-devops:latest
+                echo "Exit code after docker pull: $?"
+          
                 sudo docker stop sgroup-devops-container || true
                 sudo docker rm sgroup-devops-container || true
+          
                 sudo docker run -d --name sgroup-devops-container -p 3000:3000 -e DB_URI='${{ secrets.DB_URI }}' ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.ap-southeast-2.amazonaws.com/sgroup-devops:latest
+                echo "Exit code after docker run: $?"
