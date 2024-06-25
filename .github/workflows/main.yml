@@ -13,17 +13,6 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v2
 
-      - name: Set up Node.js
-        uses: actions/setup-node@v2
-        with:
-          node-version: 20
-
-      - name: Install pnpm
-        run: npm install -g pnpm
-
-      - name: Install dependencies
-        run: pnpm install
-
       - name: Build Docker image
         run: docker build -t sgroup-devops .
 
@@ -50,12 +39,6 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v2
 
-      - name: Create temporary directory
-        run: mkdir -p ~/.ssh
-
-      - name: Setup SSH
-        run: echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/sgrdevops.pem && chmod 600 ~/.ssh/sgrdevops.pem
-
       - name: SSH to EC2 and deploy
         uses: appleboy/ssh-action@v0.1.6
         with:
@@ -68,7 +51,3 @@ jobs:
             docker stop sgroup-devops-container || true
             docker rm sgroup-devops-container || true
             docker run -d --name sgroup-devops-container -p 3000:3000 -e DB_URI=${{ secrets.DB_URI }} ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.ap-southeast-2.amazonaws.com/sgroup-devops:latest
-
-      - name: Clean up SSH key file
-        if: always()
-        run: rm -f ~/.ssh/key.pem
